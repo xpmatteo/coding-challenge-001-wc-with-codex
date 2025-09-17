@@ -1,0 +1,10 @@
+# args: - -
+# stdin: stdin.txt
+-- stdin.txt --
+hi
+-- stdout.txt --
+      1      1      3 -
+-- stderr.txt --
+wc: stdin already consumed
+-- exitcode --
+1

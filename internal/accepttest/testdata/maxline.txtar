@@ -1,0 +1,7 @@
+# args: -L widths.txt
+-- widths.txt --
+short
+longer line
+tiny
+-- stdout.txt --
+     11 widths.txt

@@ -1,0 +1,9 @@
+# args: missing.txt existing.txt
+-- existing.txt --
+exists
+-- stdout.txt --
+      1      1      7 existing.txt
+-- stderr.txt --
+wc: missing.txt: open missing.txt: no such file or directory
+-- exitcode --
+1

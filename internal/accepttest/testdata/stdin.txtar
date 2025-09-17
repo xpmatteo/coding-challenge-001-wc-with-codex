@@ -1,0 +1,6 @@
+# stdin: stdin.txt
+-- stdin.txt --
+line one
+line two
+-- stdout.txt --
+      2      4     18

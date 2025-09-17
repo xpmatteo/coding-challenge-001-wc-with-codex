@@ -1,0 +1,6 @@
+# args: -l -w flags.txt
+-- flags.txt --
+go go go
+hi
+-- stdout.txt --
+      2      4 flags.txt

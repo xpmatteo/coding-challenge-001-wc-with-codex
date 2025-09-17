@@ -1,0 +1,5 @@
+# args: -c -m corrupt.bin
+-- corrupt.bin --
+ÿhi
+-- stdout.txt --
+      4      4 corrupt.bin

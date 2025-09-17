@@ -1,0 +1,10 @@
+# args: file.txt -
+# stdin: stdin.txt
+-- file.txt --
+alpha
+-- stdin.txt --
+beta gamma
+-- stdout.txt --
+      1      1      6 file.txt
+      1      2     11 -
+      2      3     17 total

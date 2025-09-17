@@ -1,0 +1,19 @@
+# args: --bogus
+-- stderr.txt --
+flag provided but not defined: -bogus
+Usage of wc:
+  -L	print maximum line length
+  -bytes
+    	print byte counts
+  -c	print byte counts
+  -chars
+    	print character counts
+  -l	print line counts
+  -lines
+    	print line counts
+  -m	print character counts
+  -w	print word counts
+  -words
+    	print word counts
+-- exitcode --
+2

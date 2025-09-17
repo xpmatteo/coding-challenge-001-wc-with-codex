@@ -1,0 +1,5 @@
+# args: --bytes --chars unicode.txt
+-- unicode.txt --
+こんにちは
+-- stdout.txt --
+     16      6 unicode.txt
