@@ -1,0 +1,6 @@
+# args: sample.txt
+-- sample.txt --
+hello world
+-- stdout.txt --
+      1       2      12 sample.txt
+
