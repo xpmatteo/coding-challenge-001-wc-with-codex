@@ -49,12 +49,12 @@ func parseDirectives(comment []byte) directives {
 }
 
 func TestAcceptanceSuite(t *testing.T) {
-	matches, err := filepath.Glob("testdata/acceptance/*.txtar")
+	matches, err := filepath.Glob("testdata/*.txtar")
 	if err != nil {
 		t.Fatalf("glob acceptance files: %v", err)
 	}
 	if len(matches) == 0 {
-		t.Skip("no acceptance fixtures present")
+		t.Fatal("no acceptance fixtures present")
 	}
 
 	bin := buildBinary(t)
@@ -174,7 +174,7 @@ func buildBinary(t *testing.T) string {
 	cmd.Dir = "."
 
 	if out, err := cmd.CombinedOutput(); err != nil {
-		t.Skipf("skipping acceptance tests: failed to build ./cmd/wc: %v\n%s", err, out)
+		t.Errorf("failed to build ./cmd/wc: %v\n%s", err, out)
 	}
 
 	return output
