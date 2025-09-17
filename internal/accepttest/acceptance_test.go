@@ -2,19 +2,19 @@ package accepttest
 
 import (
 	"bytes"
-	"context"
-	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
-	"time"
 
 	"golang.org/x/tools/txtar"
+
+	"wc/internal/cli"
+	"wc/internal/pipeline/aggregator"
 )
 
 type directives struct {
@@ -57,17 +57,15 @@ func TestAcceptanceSuite(t *testing.T) {
 		t.Fatal("no acceptance fixtures present")
 	}
 
-	bin := buildBinary(t)
-
 	for _, path := range matches {
 		path := path
 		t.Run(filepath.Base(path), func(t *testing.T) {
-			runCase(t, bin, path)
+			runCase(t, path)
 		})
 	}
 }
 
-func runCase(t *testing.T, bin, archivePath string) {
+func runCase(t *testing.T, archivePath string) {
 	t.Helper()
 
 	data, err := os.ReadFile(archivePath)
@@ -110,42 +108,46 @@ func runCase(t *testing.T, bin, archivePath string) {
 	stdoutExp := applyPlaceholders(expectedStdout, workdir)
 	stderrExp := applyPlaceholders(expectedStderr, workdir)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+	originalWD, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("getwd: %v", err)
+	}
+	if err := os.Chdir(workdir); err != nil {
+		t.Fatalf("chdir to workdir: %v", err)
+	}
+	t.Cleanup(func() {
+		if chdirErr := os.Chdir(originalWD); chdirErr != nil {
+			t.Fatalf("restore cwd: %v", chdirErr)
+		}
+	})
 
-	cmd := exec.CommandContext(ctx, bin, dirs.args...)
-	cmd.Dir = workdir
-	cmd.Env = append(os.Environ(), dirs.env...)
+	restoreEnv := applyEnv(dirs.env)
+	t.Cleanup(func() {
+		if err := restoreEnv(); err != nil {
+			t.Fatalf("restore env: %v", err)
+		}
+	})
 
+	var stdin io.Reader
+	var stdinFile *os.File
 	if dirs.stdin != "" {
-		stdinPath := filepath.Join(workdir, dirs.stdin)
-		stdinFile, err := os.Open(stdinPath)
+		stdinFile, err = os.Open(dirs.stdin)
 		if err != nil {
 			t.Fatalf("open stdin file %q: %v", dirs.stdin, err)
 		}
-		defer stdinFile.Close()
-		cmd.Stdin = stdinFile
+		t.Cleanup(func() {
+			stdinFile.Close()
+		})
+		stdin = stdinFile
+	} else {
+		stdin = bytes.NewReader(nil)
 	}
+
+	runner := cli.Runner{Engine: aggregator.DefaultEngine()}
 
 	var stdoutBuf, stderrBuf bytes.Buffer
-	cmd.Stdout = &stdoutBuf
-	cmd.Stderr = &stderrBuf
 
-	err = cmd.Run()
-
-	exitCode := 0
-	if err != nil {
-		var exitErr *exec.ExitError
-		if errors.As(err, &exitErr) {
-			exitCode = exitErr.ExitCode()
-		} else {
-			t.Fatalf("execute %s: %v", archivePath, err)
-		}
-	}
-
-	if ctx.Err() == context.DeadlineExceeded {
-		t.Fatalf("command timed out")
-	}
+	exitCode := runner.Run(dirs.args, stdin, &stdoutBuf, &stderrBuf)
 
 	if exitCode != expectedExit {
 		t.Errorf("exit code: got %d, want %d", exitCode, expectedExit)
@@ -161,23 +163,6 @@ func runCase(t *testing.T, bin, archivePath string) {
 	if !bytes.Equal(stderrGot, stderrExp) {
 		t.Errorf("stderr mismatch\n--- got ---\n%s\n--- want ---\n%s", stderrGot, stderrExp)
 	}
-}
-
-func buildBinary(t *testing.T) string {
-	t.Helper()
-
-	tempDir := t.TempDir()
-	output := filepath.Join(tempDir, "wc-accept")
-
-	cmd := exec.Command("go", "build", "-o", output, "./cmd/wc")
-	cmd.Env = os.Environ()
-	cmd.Dir = "."
-
-	if out, err := cmd.CombinedOutput(); err != nil {
-		t.Errorf("failed to build ./cmd/wc: %v\n%s", err, out)
-	}
-
-	return output
 }
 
 func writeFile(root, path string, data []byte) error {
@@ -197,4 +182,43 @@ func applyPlaceholders(input []byte, workdir string) []byte {
 	}
 	replaced := strings.ReplaceAll(string(input), "%TMPDIR%", workdir)
 	return []byte(replaced)
+}
+
+func applyEnv(vars []string) func() error {
+	if len(vars) == 0 {
+		return func() error { return nil }
+	}
+
+	originals := make(map[string]*string, len(vars))
+
+	for _, kv := range vars {
+		parts := strings.SplitN(kv, "=", 2)
+		if len(parts) != 2 {
+			continue
+		}
+		key, val := parts[0], parts[1]
+		if prev, ok := os.LookupEnv(key); ok {
+			copy := prev
+			originals[key] = &copy
+		} else {
+			originals[key] = nil
+		}
+		_ = os.Setenv(key, val)
+	}
+
+	return func() error {
+		var restoreErr error
+		for key, val := range originals {
+			var err error
+			if val == nil {
+				err = os.Unsetenv(key)
+			} else {
+				err = os.Setenv(key, *val)
+			}
+			if err != nil && restoreErr == nil {
+				restoreErr = err
+			}
+		}
+		return restoreErr
+	}
 }
