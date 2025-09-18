@@ -8,26 +8,35 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestAnalyzeFileCountsBytes(t *testing.T) {
-	dir := t.TempDir()
-	path := filepath.Join(dir, "sample.txt")
-	content := []byte("abc")
-	require.NoError(t, os.WriteFile(path, content, 0o644))
+func TestAnalyzeFile(t *testing.T) {
+	tests := map[string]struct {
+		content     []byte
+		expectBytes int
+		expectLines int
+	}{
+		"single line": {
+			content:     []byte("abc"),
+			expectBytes: 3,
+			expectLines: 1,
+		},
+		"two lines with trailing newline": {
+			content:     []byte("first\nsecond\n"),
+			expectBytes: len("first\nsecond\n"),
+			expectLines: 2,
+		},
+	}
 
-	stat, err := AnalyzeFile(path)
-	require.NoError(t, err)
-	require.Equal(t, path, stat.Name)
-	require.Equal(t, len(content), stat.Bytes)
-	require.Equal(t, 1, stat.Lines)
-}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			dir := t.TempDir()
+			path := filepath.Join(dir, "sample.txt")
+			require.NoError(t, os.WriteFile(path, tc.content, 0o644))
 
-func TestAnalyzeFileCountsTrailingNewlines(t *testing.T) {
-	dir := t.TempDir()
-	path := filepath.Join(dir, "sample.txt")
-	content := []byte("first\nsecond\n")
-	require.NoError(t, os.WriteFile(path, content, 0o644))
-
-	stat, err := AnalyzeFile(path)
-	require.NoError(t, err)
-	require.Equal(t, 2, stat.Lines)
+			stat, err := AnalyzeFile(path)
+			require.NoError(t, err)
+			require.Equal(t, path, stat.Name)
+			require.Equal(t, tc.expectBytes, stat.Bytes)
+			require.Equal(t, tc.expectLines, stat.Lines)
+		})
+	}
 }
