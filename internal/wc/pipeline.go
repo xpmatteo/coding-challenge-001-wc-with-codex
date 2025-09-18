@@ -1,10 +1,15 @@
 package wc
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+	"strings"
+)
 
 // Config captures the information derived from CLI arguments.
 type Config struct {
-	Files []string
+	Files      []string
+	CountBytes bool
 }
 
 // Stats represents the results for a single analyzed input.
@@ -18,8 +23,19 @@ type Stats struct {
 
 // ParseArgs converts CLI arguments into a configuration struct.
 func ParseArgs(args []string) (Config, error) {
-	files := append([]string(nil), args...)
-	return Config{Files: files}, nil
+	cfg := Config{}
+	for _, arg := range args {
+		switch arg {
+		case "-c", "--bytes":
+			cfg.CountBytes = true
+			continue
+		}
+		if strings.HasPrefix(arg, "-") && arg != "-" {
+			return Config{}, fmt.Errorf("unsupported flag: %s", arg)
+		}
+		cfg.Files = append(cfg.Files, arg)
+	}
+	return cfg, nil
 }
 
 // AnalyzeFiles collects Stats for each configured file.
@@ -37,7 +53,13 @@ func AnalyzeFiles(cfg Config) ([]Stats, error) {
 
 // AnalyzeFile returns the Stats for a single file.
 func AnalyzeFile(name string) (Stats, error) {
-	return Stats{Name: name}, nil
+	stat := Stats{Name: name}
+	data, err := os.ReadFile(name)
+	if err != nil {
+		return Stats{}, err
+	}
+	stat.Bytes = len(data)
+	return stat, nil
 }
 
 // AddTotal appends a synthetic total entry when appropriate.
@@ -50,7 +72,11 @@ func AddTotal(cfg Config, stats []Stats) ([]Stats, error) {
 func Format(cfg Config, stats []Stats) ([]string, error) {
 	lines := make([]string, 0, len(stats))
 	for _, st := range stats {
-		lines = append(lines, fmt.Sprintf("%d %d %d %s", st.Lines, st.Words, st.Bytes, st.Name))
+		if cfg.CountBytes {
+			lines = append(lines, fmt.Sprintf("%8d %s", st.Bytes, st.Name))
+			continue
+		}
+		lines = append(lines, fmt.Sprintf("0 0 0 %s", st.Name))
 	}
 	return lines, nil
 }

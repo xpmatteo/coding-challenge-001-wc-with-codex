@@ -1,9 +1,8 @@
-# skipped: true
+# skipped: false
 # args:
-#   - --bytes
-#   - --chars
-#   - unicode.txt
--- unicode.txt --
-こんにちは
+#   - -c
+#   - sample.txt
+-- sample.txt --
+hello world
 -- stdout.txt --
-     16      6 unicode.txt
+      12 sample.txt

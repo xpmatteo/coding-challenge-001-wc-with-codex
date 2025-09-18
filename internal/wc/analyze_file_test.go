@@ -1,16 +1,27 @@
 package wc
 
-import "testing"
+import (
+	"os"
+	"path/filepath"
+	"testing"
+)
 
-func TestAnalyzeFileReturnsZeroStats(t *testing.T) {
-	stat, err := AnalyzeFile("sample.txt")
+func TestAnalyzeFileCountsBytes(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "sample.txt")
+	content := []byte("abc")
+	if err := os.WriteFile(path, content, 0o644); err != nil {
+		t.Fatalf("write temp file: %v", err)
+	}
+
+	stat, err := AnalyzeFile(path)
 	if err != nil {
 		t.Fatalf("AnalyzeFile returned error: %v", err)
 	}
-	if stat.Name != "sample.txt" {
-		t.Fatalf("expected name sample.txt, got %q", stat.Name)
+	if stat.Name != path {
+		t.Fatalf("expected name %q, got %q", path, stat.Name)
 	}
-	if stat.Lines != 0 || stat.Words != 0 || stat.Bytes != 0 {
-		t.Fatalf("expected zero counts, got %+v", stat)
+	if stat.Bytes != len(content) {
+		t.Fatalf("expected %d bytes, got %d", len(content), stat.Bytes)
 	}
 }

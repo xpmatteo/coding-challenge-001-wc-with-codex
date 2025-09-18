@@ -1,9 +1,20 @@
 package wc
 
-import "testing"
+import (
+	"os"
+	"path/filepath"
+	"testing"
+)
 
-func TestAnalyzeFilesReturnsZeroStats(t *testing.T) {
-	cfg := Config{Files: []string{"sample.txt"}}
+func TestAnalyzeFilesReturnsStatsForEachFile(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "sample.txt")
+	content := []byte("hello world\n")
+	if err := os.WriteFile(path, content, 0o644); err != nil {
+		t.Fatalf("write temp file: %v", err)
+	}
+
+	cfg := Config{Files: []string{path}, CountBytes: true}
 	stats, err := AnalyzeFiles(cfg)
 	if err != nil {
 		t.Fatalf("AnalyzeFiles returned error: %v", err)
@@ -11,11 +22,10 @@ func TestAnalyzeFilesReturnsZeroStats(t *testing.T) {
 	if len(stats) != 1 {
 		t.Fatalf("expected 1 stats entry, got %d", len(stats))
 	}
-	got := stats[0]
-	if got.Name != "sample.txt" {
-		t.Fatalf("expected name sample.txt, got %q", got.Name)
+	if stats[0].Name != path {
+		t.Fatalf("expected name %q, got %q", path, stats[0].Name)
 	}
-	if got.Lines != 0 || got.Words != 0 || got.Bytes != 0 {
-		t.Fatalf("expected zero counts, got %+v", got)
+	if stats[0].Bytes != len(content) {
+		t.Fatalf("expected %d bytes, got %d", len(content), stats[0].Bytes)
 	}
 }

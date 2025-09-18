@@ -1,7 +1,0 @@
-# skipped: false
-# args:
-#   - sample.txt
--- sample.txt --
-hello world
--- stdout.txt --
-0 0 0 sample.txt
