@@ -1,6 +1,6 @@
 # skipped: false
 # args:
-#   - -c
+#   - --bytes
 #   - sample.txt
 -- sample.txt --
 hello world
