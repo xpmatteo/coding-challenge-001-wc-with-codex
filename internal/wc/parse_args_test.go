@@ -1,29 +1,21 @@
 package wc
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/require"
+)
 
 func TestParseArgsWithBytesFlag(t *testing.T) {
 	cfg, err := ParseArgs([]string{"-c", "sample.txt"})
-	if err != nil {
-		t.Fatalf("ParseArgs returned error: %v", err)
-	}
-	if !cfg.CountBytes {
-		t.Fatalf("expected CountBytes to be true")
-	}
-	if len(cfg.Files) != 1 || cfg.Files[0] != "sample.txt" {
-		t.Fatalf("ParseArgs returned unexpected files: %#v", cfg.Files)
-	}
+	require.NoError(t, err)
+	require.True(t, cfg.CountBytes)
+	require.Equal(t, []string{"sample.txt"}, cfg.Files)
 }
 
 func TestParseArgsWithoutFlagsLeavesCountersDisabled(t *testing.T) {
 	cfg, err := ParseArgs([]string{"sample.txt"})
-	if err != nil {
-		t.Fatalf("ParseArgs returned error: %v", err)
-	}
-	if cfg.CountBytes {
-		t.Fatalf("expected CountBytes to be false")
-	}
-	if len(cfg.Files) != 1 || cfg.Files[0] != "sample.txt" {
-		t.Fatalf("ParseArgs returned unexpected files: %#v", cfg.Files)
-	}
+	require.NoError(t, err)
+	require.False(t, cfg.CountBytes)
+	require.Equal(t, []string{"sample.txt"}, cfg.Files)
 }
