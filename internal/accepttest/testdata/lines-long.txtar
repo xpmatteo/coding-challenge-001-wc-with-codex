@@ -1,0 +1,9 @@
+# skipped: false
+# args:
+#   - --lines
+#   - sample.txt
+-- sample.txt --
+alpha
+beta gamma
+-- stdout.txt --
+       2 sample.txt

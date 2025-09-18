@@ -23,3 +23,12 @@ func TestFormatOutputsBytesWhenRequested(t *testing.T) {
 	require.Len(t, lines, 1)
 	require.Equal(t, "      12 sample.txt", lines[0])
 }
+
+func TestFormatOutputsLinesWhenRequested(t *testing.T) {
+	cfg := Config{CountLines: true}
+	stats := []Stats{{Name: "sample.txt", Lines: 2}}
+	lines, err := Format(cfg, stats)
+	require.NoError(t, err)
+	require.Len(t, lines, 1)
+	require.Equal(t, "       2 sample.txt", lines[0])
+}

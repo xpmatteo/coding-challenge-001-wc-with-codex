@@ -10,6 +10,7 @@ import (
 type Config struct {
 	Files      []string
 	CountBytes bool
+	CountLines bool
 }
 
 // Stats represents the results for a single analyzed input.
@@ -28,6 +29,9 @@ func ParseArgs(args []string) (Config, error) {
 		switch arg {
 		case "-c", "--bytes":
 			cfg.CountBytes = true
+			continue
+		case "-l", "--lines":
+			cfg.CountLines = true
 			continue
 		}
 		if strings.HasPrefix(arg, "-") && arg != "-" {
@@ -59,6 +63,7 @@ func AnalyzeFile(name string) (Stats, error) {
 		return Stats{}, err
 	}
 	stat.Bytes = len(data)
+	stat.Lines = countLines(data)
 	return stat, nil
 }
 
@@ -72,11 +77,31 @@ func AddTotal(cfg Config, stats []Stats) ([]Stats, error) {
 func Format(cfg Config, stats []Stats) ([]string, error) {
 	lines := make([]string, 0, len(stats))
 	for _, st := range stats {
-		if cfg.CountBytes {
+		if cfg.CountLines && !cfg.CountBytes {
+			lines = append(lines, fmt.Sprintf("%8d %s", st.Lines, st.Name))
+			continue
+		}
+		if cfg.CountBytes && !cfg.CountLines {
 			lines = append(lines, fmt.Sprintf("%8d %s", st.Bytes, st.Name))
 			continue
 		}
 		lines = append(lines, fmt.Sprintf("0 0 0 %s", st.Name))
 	}
 	return lines, nil
+}
+
+func countLines(data []byte) int {
+	if len(data) == 0 {
+		return 0
+	}
+	count := 0
+	for _, b := range data {
+		if b == '\n' {
+			count++
+		}
+	}
+	if data[len(data)-1] != '\n' {
+		count++
+	}
+	return count
 }

@@ -20,4 +20,5 @@ func TestAnalyzeFilesReturnsStatsForEachFile(t *testing.T) {
 	require.Len(t, stats, 1)
 	require.Equal(t, path, stats[0].Name)
 	require.Equal(t, len(content), stats[0].Bytes)
+	require.Equal(t, 1, stats[0].Lines)
 }
