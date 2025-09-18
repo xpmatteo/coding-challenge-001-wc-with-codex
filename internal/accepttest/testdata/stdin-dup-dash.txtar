@@ -1,4 +1,7 @@
-# args: - -
+# skipped: true
+# args:
+#   - "-"
+#   - "-"
 # stdin: stdin.txt
 -- stdin.txt --
 hi

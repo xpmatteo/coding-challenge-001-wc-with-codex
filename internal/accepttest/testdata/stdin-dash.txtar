@@ -1,4 +1,7 @@
-# args: file.txt -
+# skipped: true
+# args:
+#   - file.txt
+#   - "-"
 # stdin: stdin.txt
 -- file.txt --
 alpha

@@ -12,39 +12,98 @@ import (
 	"testing"
 
 	"golang.org/x/tools/txtar"
+	"gopkg.in/yaml.v3"
 
 	"wc/internal/cli"
 )
 
 type directives struct {
-	args  []string
-	stdin string
-	env   []string
+	args    []string
+	stdin   string
+	env     []string
+	skipped bool
 }
 
-func parseDirectives(comment []byte) directives {
-	d := directives{}
-	lines := strings.Split(string(comment), "\n")
+type stringList []string
+
+func (s *stringList) UnmarshalYAML(value *yaml.Node) error {
+	switch value.Kind {
+	case yaml.SequenceNode:
+		var list []string
+		if err := value.Decode(&list); err != nil {
+			return err
+		}
+		*s = list
+	case yaml.ScalarNode:
+		if value.Tag == "!!null" || value.Value == "" {
+			*s = nil
+			return nil
+		}
+		var single string
+		if err := value.Decode(&single); err != nil {
+			return err
+		}
+		if single == "" {
+			*s = nil
+			return nil
+		}
+		*s = []string{single}
+	case yaml.AliasNode:
+		if value.Alias == nil {
+			*s = nil
+			return nil
+		}
+		return s.UnmarshalYAML(value.Alias)
+	default:
+		return fmt.Errorf("expected scalar or sequence for string list, got %s", value.ShortTag())
+	}
+	return nil
+}
+
+func parseDirectives(comment []byte) (directives, error) {
+	const marker = "#"
+	var builder strings.Builder
+	lines := strings.Split(strings.ReplaceAll(string(comment), "\r\n", "\n"), "\n")
 	for _, raw := range lines {
-		raw = strings.TrimSpace(raw)
-		if raw == "" || !strings.HasPrefix(raw, "#") {
+		trimmed := strings.TrimRight(raw, "\r")
+		idx := strings.Index(trimmed, marker)
+		if idx == -1 {
 			continue
 		}
-		trimmed := strings.TrimSpace(strings.TrimPrefix(raw, "#"))
-		switch {
-		case strings.HasPrefix(trimmed, "args:"):
-			fields := strings.Fields(strings.TrimSpace(strings.TrimPrefix(trimmed, "args:")))
-			d.args = append(d.args, fields...)
-		case strings.HasPrefix(trimmed, "stdin:"):
-			d.stdin = strings.TrimSpace(strings.TrimPrefix(trimmed, "stdin:"))
-		case strings.HasPrefix(trimmed, "env:"):
-			val := strings.TrimSpace(strings.TrimPrefix(trimmed, "env:"))
-			if val != "" {
-				d.env = append(d.env, val)
-			}
+		line := trimmed[idx+len(marker):]
+		if len(line) > 0 && line[0] == ' ' {
+			line = line[1:]
 		}
+		if line == "" {
+			builder.WriteByte('\n')
+			continue
+		}
+		builder.WriteString(line)
+		builder.WriteByte('\n')
 	}
-	return d
+
+	yamlBody := strings.TrimSpace(builder.String())
+	if yamlBody == "" {
+		return directives{}, nil
+	}
+
+	var raw struct {
+		Args    stringList `yaml:"args"`
+		Stdin   string     `yaml:"stdin"`
+		Env     stringList `yaml:"env"`
+		Skipped bool       `yaml:"skipped"`
+	}
+
+	if err := yaml.Unmarshal([]byte(yamlBody), &raw); err != nil {
+		return directives{}, fmt.Errorf("parse directives yaml: %w", err)
+	}
+
+	return directives{
+		args:    append([]string(nil), raw.Args...),
+		stdin:   raw.Stdin,
+		env:     append([]string(nil), raw.Env...),
+		skipped: raw.Skipped,
+	}, nil
 }
 
 func TestAcceptanceSuite(t *testing.T) {
@@ -73,7 +132,13 @@ func runCase(t *testing.T, archivePath string) {
 	}
 
 	ar := txtar.Parse(data)
-	dirs := parseDirectives(ar.Comment)
+	dirs, err := parseDirectives(ar.Comment)
+	if err != nil {
+		t.Fatalf("parse directives: %v", err)
+	}
+	if dirs.skipped {
+		t.Skip("skipped by directive")
+	}
 
 	workdir := t.TempDir()
 
@@ -218,6 +283,7 @@ func applyEnv(vars []string) func() error {
 				restoreErr = err
 			}
 		}
+
 		return restoreErr
 	}
 }

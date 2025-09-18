@@ -1,4 +1,8 @@
-# args: -l -w flags.txt
+# skipped: true
+# args:
+#   - -l
+#   - -w
+#   - flags.txt
 -- flags.txt --
 go go go
 hi

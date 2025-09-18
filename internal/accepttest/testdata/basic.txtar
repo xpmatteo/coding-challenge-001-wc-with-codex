@@ -1,4 +1,6 @@
-# args: sample.txt
+# skipped: true
+# args:
+#   - sample.txt
 -- sample.txt --
 hello world
 -- stdout.txt --

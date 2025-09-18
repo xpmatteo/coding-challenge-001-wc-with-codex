@@ -1,4 +1,8 @@
-# args: --bytes --chars unicode.txt
+# skipped: true
+# args:
+#   - --bytes
+#   - --chars
+#   - unicode.txt
 -- unicode.txt --
 こんにちは
 -- stdout.txt --

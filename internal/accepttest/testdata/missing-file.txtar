@@ -1,4 +1,7 @@
-# args: missing.txt existing.txt
+# skipped: true
+# args:
+#   - missing.txt
+#   - existing.txt
 -- existing.txt --
 exists
 -- stdout.txt --

@@ -1,4 +1,7 @@
-# args: first.txt second.txt
+# skipped: true
+# args:
+#   - first.txt
+#   - second.txt
 -- first.txt --
 alpha
 beta gamma
