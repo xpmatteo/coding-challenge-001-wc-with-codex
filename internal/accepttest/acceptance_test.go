@@ -200,7 +200,7 @@ func runCase(t *testing.T, archivePath string) {
 			t.Fatalf("open stdin file %q: %v", dirs.stdin, err)
 		}
 		t.Cleanup(func() {
-			stdinFile.Close()
+			stdinFile.Close() //nolint:errcheck // best-effort close in test cleanup
 		})
 		stdin = stdinFile
 	} else {
