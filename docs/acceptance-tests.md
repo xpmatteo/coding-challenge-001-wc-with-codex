@@ -16,7 +16,7 @@ The `testdata/acceptance` directory stores end-to-end scenarios using [`txtar`](
 ## Test Harness Behaviour
 1. Parse the archive with `txtar.ParseFile`.
 2. Materialize each file in a temporary working directory.
-3. Build (or reuse) the `wc` binary under test.
+3. Use a test version of the app
 4. Execute with provided arguments and environment, supplying stdin when requested.
 5. Compare stdout, stderr, and exit code against the golden files.
 6. Support placeholder substitution (e.g., `%TMPDIR%`) in expected outputs to account for run-specific paths.

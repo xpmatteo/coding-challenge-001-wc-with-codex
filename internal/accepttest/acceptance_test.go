@@ -14,7 +14,6 @@ import (
 	"golang.org/x/tools/txtar"
 
 	"wc/internal/cli"
-	"wc/internal/pipeline/aggregator"
 )
 
 type directives struct {
@@ -143,7 +142,7 @@ func runCase(t *testing.T, archivePath string) {
 		stdin = bytes.NewReader(nil)
 	}
 
-	runner := cli.Runner{Engine: aggregator.DefaultEngine()}
+	runner := cli.App{}
 
 	var stdoutBuf, stderrBuf bytes.Buffer
 
