@@ -6,7 +6,6 @@
 exists
 -- stdout.txt --
        1       1       7 existing.txt
-#12345670123456701234567
 -- stderr.txt --
 wc: missing.txt: open missing.txt: no such file or directory
 -- exitcode --
