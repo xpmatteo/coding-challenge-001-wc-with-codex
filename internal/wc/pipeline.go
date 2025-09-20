@@ -1,16 +1,37 @@
 package wc
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"strings"
 )
 
+type counterKind string
+
+const (
+	counterLines counterKind = "lines"
+	counterWords counterKind = "words"
+	counterBytes counterKind = "bytes"
+	counterChars counterKind = "chars"
+)
+
 // Config captures the information derived from CLI arguments.
 type Config struct {
-	Files      []string
-	CountBytes bool
-	CountLines bool
+	Files        []string
+	CountBytes   bool
+	CountLines   bool
+	CountWords   bool
+	counterOrder []counterKind
+}
+
+func (cfg *Config) addCounter(kind counterKind) {
+	for _, existing := range cfg.counterOrder {
+		if existing == kind {
+			return
+		}
+	}
+	cfg.counterOrder = append(cfg.counterOrder, kind)
 }
 
 // Stats represents the results for a single analyzed input.
@@ -29,9 +50,15 @@ func ParseArgs(args []string) (Config, error) {
 		switch arg {
 		case "-c", "--bytes":
 			cfg.CountBytes = true
+			cfg.addCounter(counterBytes)
 			continue
 		case "-l", "--lines":
 			cfg.CountLines = true
+			cfg.addCounter(counterLines)
+			continue
+		case "-w", "--words":
+			cfg.CountWords = true
+			cfg.addCounter(counterWords)
 			continue
 		}
 		if strings.HasPrefix(arg, "-") && arg != "-" {
@@ -64,6 +91,7 @@ func AnalyzeFile(name string) (Stats, error) {
 	}
 	stat.Bytes = len(data)
 	stat.Lines = countLines(data)
+	stat.Words = countWords(data)
 	return stat, nil
 }
 
@@ -77,15 +105,25 @@ func AddTotal(cfg Config, stats []Stats) ([]Stats, error) {
 func Format(cfg Config, stats []Stats) ([]string, error) {
 	lines := make([]string, 0, len(stats))
 	for _, st := range stats {
-		if cfg.CountLines && !cfg.CountBytes {
-			lines = append(lines, fmt.Sprintf("%8d %s", st.Lines, st.Name))
+		parts := make([]string, 0, 3)
+		if cfg.CountLines {
+			parts = append(parts, fmt.Sprintf("%8d", st.Lines))
+		}
+		if cfg.CountWords {
+			parts = append(parts, fmt.Sprintf("%8d", st.Words))
+		}
+		if cfg.CountBytes {
+			parts = append(parts, fmt.Sprintf("%8d", st.Bytes))
+		}
+		if len(parts) == 0 {
+			lines = append(lines, fmt.Sprintf("0 0 0 %s", st.Name))
 			continue
 		}
-		if cfg.CountBytes && !cfg.CountLines {
-			lines = append(lines, fmt.Sprintf("%8d %s", st.Bytes, st.Name))
-			continue
+		var counts strings.Builder
+		for _, part := range parts {
+			counts.WriteString(part)
 		}
-		lines = append(lines, fmt.Sprintf("0 0 0 %s", st.Name))
+		lines = append(lines, fmt.Sprintf("%s %s", counts.String(), st.Name))
 	}
 	return lines, nil
 }
@@ -104,4 +142,8 @@ func countLines(data []byte) int {
 		count++
 	}
 	return count
+}
+
+func countWords(data []byte) int {
+	return len(bytes.Fields(data))
 }

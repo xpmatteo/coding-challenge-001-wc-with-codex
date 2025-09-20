@@ -6,4 +6,5 @@
 -- corrupt.bin --
 �hi
 -- stdout.txt --
-      4      4 corrupt.bin
+       4       4 corrupt.bin
+#12345670123456701234567

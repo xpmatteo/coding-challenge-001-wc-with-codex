@@ -21,7 +21,7 @@ func TestAnalyzeFiles(t *testing.T) {
 				"sample.txt": []byte("hello world\n"),
 			},
 			cfg:           Config{CountBytes: true},
-			expectedStats: []Stats{{Name: "sample.txt", Bytes: len("hello world\n"), Lines: 1}},
+			expectedStats: []Stats{{Name: "sample.txt", Bytes: len("hello world\n"), Lines: 1, Words: 2}},
 		},
 	}
 
@@ -43,6 +43,7 @@ func TestAnalyzeFiles(t *testing.T) {
 			for i, expected := range tc.expectedStats {
 				require.Equal(t, expected.Bytes, stats[i].Bytes)
 				require.Equal(t, expected.Lines, stats[i].Lines)
+				require.Equal(t, expected.Words, stats[i].Words)
 				require.Equal(t, expected.Name, filepath.Base(stats[i].Name))
 			}
 		})

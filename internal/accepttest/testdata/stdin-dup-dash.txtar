@@ -6,7 +6,8 @@
 -- stdin.txt --
 hi
 -- stdout.txt --
-      1      1      3 -
+       1       1       3 -
+#12345670123456701234567
 -- stderr.txt --
 wc: stdin already consumed
 -- exitcode --

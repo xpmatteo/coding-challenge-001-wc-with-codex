@@ -25,7 +25,21 @@ func TestFormat(t *testing.T) {
 		"lines only": {
 			cfg:    Config{CountLines: true},
 			stats:  []Stats{{Name: "sample.txt", Lines: 2}},
-			expect: []string{"       2 sample.txt"},
+			expect: []string{"      2 sample.txt"},
+		},
+		"words only": {
+			cfg:    Config{CountWords: true},
+			stats:  []Stats{{Name: "sample.txt", Words: 3}},
+			expect: []string{"      3 sample.txt"},
+		},
+		"lines and words": {
+			cfg: Config{CountLines: true, CountWords: true},
+			stats: []Stats{{
+				Name:  "sample.txt",
+				Lines: 2,
+				Words: 5,
+			}},
+			expect: []string{"      2      5 sample.txt"},
 		},
 	}
 

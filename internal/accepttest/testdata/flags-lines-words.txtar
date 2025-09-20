@@ -1,4 +1,4 @@
-# skipped: true
+# skipped: false
 # args:
 #   - -l
 #   - -w
@@ -7,4 +7,4 @@
 go go go
 hi
 -- stdout.txt --
-      2      4 flags.txt
+       2       4 flags.txt

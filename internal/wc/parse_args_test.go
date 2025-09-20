@@ -18,11 +18,24 @@ func TestParseArgs(t *testing.T) {
 		},
 		"bytes short flag": {
 			args:      []string{"-c", "sample.txt"},
-			expectCfg: Config{Files: []string{"sample.txt"}, CountBytes: true},
+			expectCfg: Config{Files: []string{"sample.txt"}, CountBytes: true, counterOrder: []counterKind{counterBytes}},
 		},
 		"lines long flag": {
 			args:      []string{"--lines", "sample.txt"},
-			expectCfg: Config{Files: []string{"sample.txt"}, CountLines: true},
+			expectCfg: Config{Files: []string{"sample.txt"}, CountLines: true, counterOrder: []counterKind{counterLines}},
+		},
+		"words short flag": {
+			args:      []string{"-w", "sample.txt"},
+			expectCfg: Config{Files: []string{"sample.txt"}, CountWords: true, counterOrder: []counterKind{counterWords}},
+		},
+		"flag order preserved": {
+			args: []string{"-w", "-l", "sample.txt"},
+			expectCfg: Config{
+				Files:        []string{"sample.txt"},
+				CountLines:   true,
+				CountWords:   true,
+				counterOrder: []counterKind{counterWords, counterLines},
+			},
 		},
 	}
 
@@ -36,7 +49,9 @@ func TestParseArgs(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, tc.expectCfg.CountBytes, cfg.CountBytes)
 			require.Equal(t, tc.expectCfg.CountLines, cfg.CountLines)
+			require.Equal(t, tc.expectCfg.CountWords, cfg.CountWords)
 			require.Equal(t, tc.expectCfg.Files, cfg.Files)
+			require.Equal(t, tc.expectCfg.counterOrder, cfg.counterOrder)
 		})
 	}
 }
