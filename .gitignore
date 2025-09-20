@@ -1,4 +1,5 @@
 /.idea
 /wc
 /.gocache
-.golangci
+/.golangci
+/.env
