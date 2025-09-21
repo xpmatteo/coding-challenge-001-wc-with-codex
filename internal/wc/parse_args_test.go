@@ -28,6 +28,10 @@ func TestParseArgs(t *testing.T) {
 			args:      []string{"-w", "sample.txt"},
 			expectCfg: Config{Files: []string{"sample.txt"}, CountWords: true, counterOrder: []counterKind{counterWords}},
 		},
+		"chars long flag": {
+			args:      []string{"--chars", "sample.txt"},
+			expectCfg: Config{Files: []string{"sample.txt"}, CountChars: true, counterOrder: []counterKind{counterChars}},
+		},
 		"flag order preserved": {
 			args: []string{"-w", "-l", "sample.txt"},
 			expectCfg: Config{
@@ -50,6 +54,7 @@ func TestParseArgs(t *testing.T) {
 			require.Equal(t, tc.expectCfg.CountBytes, cfg.CountBytes)
 			require.Equal(t, tc.expectCfg.CountLines, cfg.CountLines)
 			require.Equal(t, tc.expectCfg.CountWords, cfg.CountWords)
+			require.Equal(t, tc.expectCfg.CountChars, cfg.CountChars)
 			require.Equal(t, tc.expectCfg.Files, cfg.Files)
 			require.Equal(t, tc.expectCfg.counterOrder, cfg.counterOrder)
 		})
