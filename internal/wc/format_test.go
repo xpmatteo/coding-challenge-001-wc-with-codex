@@ -32,6 +32,11 @@ func TestFormat(t *testing.T) {
 			stats:  []Stats{{Name: "sample.txt", Words: 3}},
 			expect: []string{"       3 sample.txt"},
 		},
+		"chars only": {
+			cfg:    Config{CountChars: true},
+			stats:  []Stats{{Name: "sample.txt", Chars: 4}},
+			expect: []string{"       4 sample.txt"},
+		},
 		"lines and words": {
 			cfg: Config{CountLines: true, CountWords: true},
 			stats: []Stats{{
@@ -40,6 +45,26 @@ func TestFormat(t *testing.T) {
 				Words: 5,
 			}},
 			expect: []string{"       2       5 sample.txt"},
+		},
+		"chars and bytes": {
+			cfg: Config{CountChars: true, CountBytes: true},
+			stats: []Stats{{
+				Name:  "sample.txt",
+				Chars: 8,
+				Bytes: 12,
+			}},
+			expect: []string{"       8      12 sample.txt"},
+		},
+		"lines words chars bytes": {
+			cfg: Config{CountLines: true, CountWords: true, CountChars: true, CountBytes: true},
+			stats: []Stats{{
+				Name:  "sample.txt",
+				Lines: 1,
+				Words: 2,
+				Chars: 8,
+				Bytes: 9,
+			}},
+			expect: []string{"       1       2       8       9 sample.txt"},
 		},
 	}
 

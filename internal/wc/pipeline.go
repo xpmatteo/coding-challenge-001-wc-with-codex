@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"unicode/utf8"
 )
 
 type counterKind string
@@ -22,6 +23,7 @@ type Config struct {
 	CountBytes   bool
 	CountLines   bool
 	CountWords   bool
+	CountChars   bool
 	counterOrder []counterKind
 }
 
@@ -60,6 +62,10 @@ func ParseArgs(args []string) (Config, error) {
 			cfg.CountWords = true
 			cfg.addCounter(counterWords)
 			continue
+		case "-m", "--chars":
+			cfg.CountChars = true
+			cfg.addCounter(counterChars)
+			continue
 		}
 		if strings.HasPrefix(arg, "-") && arg != "-" {
 			return Config{}, fmt.Errorf("unsupported flag: %s", arg)
@@ -92,6 +98,7 @@ func AnalyzeFile(name string) (Stats, error) {
 	stat.Bytes = len(data)
 	stat.Lines = countLines(data)
 	stat.Words = countWords(data)
+	stat.Chars = countChars(data)
 	return stat, nil
 }
 
@@ -105,12 +112,15 @@ func AddTotal(cfg Config, stats []Stats) ([]Stats, error) {
 func Format(cfg Config, stats []Stats) ([]string, error) {
 	lines := make([]string, 0, len(stats))
 	for _, st := range stats {
-		parts := make([]string, 0, 3)
+		parts := make([]string, 0, 4)
 		if cfg.CountLines {
 			parts = append(parts, fmt.Sprintf("%8d", st.Lines))
 		}
 		if cfg.CountWords {
 			parts = append(parts, fmt.Sprintf("%8d", st.Words))
+		}
+		if cfg.CountChars {
+			parts = append(parts, fmt.Sprintf("%8d", st.Chars))
 		}
 		if cfg.CountBytes {
 			parts = append(parts, fmt.Sprintf("%8d", st.Bytes))
@@ -146,4 +156,16 @@ func countLines(data []byte) int {
 
 func countWords(data []byte) int {
 	return len(bytes.Fields(data))
+}
+
+func countChars(data []byte) int {
+	count := 0
+	for len(data) > 0 {
+		r, size := utf8.DecodeRune(data)
+		if r != utf8.RuneError || size != 1 {
+			count++
+		}
+		data = data[size:]
+	}
+	return count
 }
