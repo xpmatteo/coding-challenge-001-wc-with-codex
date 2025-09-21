@@ -1,8 +1,9 @@
 # skipped: false
 # args:
-#   - --bytes
+#   - -c
+#   - -m
 #   - sample.txt
 -- sample.txt --
-hello world
+héllo 🌍
 -- stdout.txt --
-      12 sample.txt
+       8      12 sample.txt

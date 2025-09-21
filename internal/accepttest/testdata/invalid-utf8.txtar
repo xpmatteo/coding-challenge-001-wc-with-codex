@@ -1,9 +1,9 @@
-# skipped: true
+# skipped: false
 # args:
 #   - -c
 #   - -m
 #   - corrupt.bin
 -- corrupt.bin --
-�hi
+hi
 -- stdout.txt --
-       4       4 corrupt.bin
+       3       4 corrupt.bin
